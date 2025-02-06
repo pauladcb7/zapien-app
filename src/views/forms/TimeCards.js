@@ -72,6 +72,8 @@ const TimeCards = () => {
   const [currentDate, setCurrentDate] = useState(moment().format('dddd, MMMM Do, YYYY'))
   const [jobName, setJobName] = useState('')
   const [jobDescription, setJobDescription] = useState('')
+  const [startTime, setStartTime] = useState('')
+  const [endTime, setEndTime] = useState('')
   const [otherJobLocation, setOtherJobLocation] = useState('')
   const [timeCardId, setTimeCardId] = useState('')
   const [timeEntryId, setTimeEntryId] = useState('')
@@ -287,6 +289,40 @@ const TimeCards = () => {
                               }
                             />
 
+                            {meta.touched && meta.error && (
+                              <span className="text-danger">{meta.error}</span>
+                            )}
+                          </div>
+                        )}
+                      </Field>
+                      <Field name="startTime">
+                        {({ input, meta }) => (
+                          <div className="mb-3">
+                            <CFormLabel>Start Time</CFormLabel>
+
+                            <CFormInput
+                              {...input}
+                              rows="3"
+                              placeholder="Enter the start time..."
+                              invalid={meta.touched && meta.error}
+                            />
+                            {meta.touched && meta.error && (
+                              <span className="text-danger">{meta.error}</span>
+                            )}
+                          </div>
+                        )}
+                      </Field>
+                      <Field name="endTime">
+                        {({ input, meta }) => (
+                          <div className="mb-3">
+                            <CFormLabel>End Time</CFormLabel>
+
+                            <CFormInput
+                              {...input}
+                              rows="3"
+                              placeholder="Enter the end time..."
+                              invalid={meta.touched && meta.error}
+                            />
                             {meta.touched && meta.error && (
                               <span className="text-danger">{meta.error}</span>
                             )}
