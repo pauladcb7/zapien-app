@@ -1,4 +1,6 @@
+
 import React, { useState, useEffect } from 'react'
+import { toast } from 'react-toastify'
 import {
   CButton,
   CCard,
@@ -132,10 +134,12 @@ function TimeCardCrud() {
   const [collapsed, setCollapsed] = useState(true)
   const [showElements, setShowElements] = useState(true)
   const isAdmin = useSelector((state) => state.user.role === 'admin')
-  const { addToast } = useToasts()
+  
 
   useEffect(() => {
-    // Fetch data and handle side effects
+    // Example usage:
+    // toast.success('Loaded time cards!') // ADD THIS FOR SUCCESS
+    // toast.error('Something went wrong!') // ADD THIS FOR ERROR
   }, [])
 
   return (
@@ -178,8 +182,12 @@ function TimeCardCrud() {
                   disableDelete={!isAdmin}
                   title="Time Card"
                   rows={[]}
-                  onAddRow={() => {}}
-                  onRefreshTable={() => {}}
+                  onAddRow={() => {
+                    // toast.success('Row added!') // EXAMPLE USAGE
+                  }}
+                  onRefreshTable={() => {
+                    // toast.info('Table refreshed!') // EXAMPLE USAGE
+                  }}
                   metadata={[]}
                   loading={false}
                   filters={(startDate, endDate) => <div>Filters...</div>}
