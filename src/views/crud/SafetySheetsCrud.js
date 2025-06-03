@@ -11,7 +11,7 @@ import {
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import CrudTable from 'src/components/CrudTable'
-import { useToasts } from 'react-toast-notifications'
+import { toast } from 'react-toastify' // UPDATED
 import { SAVE_SAFETY_SHEET, GET_SAFETY_SHEET, SAFETY_SHEET } from 'src/helpers/urls'
 import { api } from 'src/helpers/api'
 import moment from 'moment'
@@ -33,7 +33,7 @@ const SafetySheetCrud = () => {
   const [collapsed, setCollapsed] = useState(true)
   const [loading, setLoading] = useState(false)
   const [rows, setRows] = useState([])
-  const { addToast } = useToasts()
+  const [showElements, setShowElements] = useState(true)
 
   const metadata = [
     {
@@ -98,11 +98,11 @@ const SafetySheetCrud = () => {
     api
       .delete(SAFETY_SHEET, { data: { id: row.id } })
       .then(() => {
-        addToast('Safety Sheet Removed.', { appearance: 'success', autoDismiss: true })
+        toast.success('Safety Sheet Removed.', { autoClose: 3000 }) // UPDATED
         fetchTable()
       })
       .catch(() => {
-        addToast('Something went wrong. Try again.', { appearance: 'error', autoDismiss: true })
+        toast.error('Something went wrong. Try again.', { autoClose: 3000 }) // UPDATED
       })
   }
 

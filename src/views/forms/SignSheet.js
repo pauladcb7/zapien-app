@@ -25,7 +25,7 @@ import { getPDfInstance } from 'src/utils/pdf'
 import { getBase64ImageFromURL } from 'src/utils'
 import moment from 'moment'
 import { useSelector } from 'react-redux'
-import { useToasts } from 'react-toast-notifications'
+import { toast } from 'react-toastify'
 import { api } from '../../helpers/api'
 import { SAVE_SAFETY_SHEET } from '../../helpers/urls/index'
 
@@ -34,7 +34,7 @@ const required = (value) => (value ? undefined : 'Required')
 const SignSheet = () => {
   const [collapsed, setCollapsed] = useState(true)
   const [loading, setLoading] = useState(false)
-  const { addToast } = useToasts()
+  const [documentContent, setDocumentContent] = useState(null)
   const params = useParams()
   const user = useSelector((state) => state.user)
 
@@ -52,16 +52,13 @@ const SignSheet = () => {
         ...formData,
         supervisor_signature: formData.supervisorSignature,
       })
-      addToast('Safety Sheet Submitted.', { appearance: 'success', autoDismiss: true })
+      toast.success('Safety Sheet Submitted.', { autoClose: 3000 })
       getPDfInstance().then((pdfMake) => {
         pdfMake.createPdf(pdfData).download()
       })
     } catch (error) {
       console.error('Error saving safety sheet:', error)
-      addToast('Something went wrong. Please try again.', {
-        appearance: 'error',
-        autoDismiss: true,
-      })
+      toast.error('Something went wrong. Please try again.', { autoClose: 3000 })
     } finally {
       setLoading(false)
     }

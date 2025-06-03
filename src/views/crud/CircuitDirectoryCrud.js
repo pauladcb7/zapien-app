@@ -3,21 +3,20 @@ import {
   CButton,
   CCard,
   CCardBody,
-  CCardFooter,
   CCardHeader,
   CCol,
   CCollapse,
   CRow,
   CBadge,
-} from '@coreui/react' // Updated imports for CoreUI components with "C" prefix
+} from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import CrudTable from 'src/components/CrudTable'
-import { useToasts } from 'react-toast-notifications'
 import { circuitHPrint, circuitPrint } from 'src/utils/circuitPrint'
 import moment from 'moment'
 import { GET_CIRCUIT_DIRECTORY, SAVE_CIRCUIT_DIRECTORY, CIRCUIT_DIRECTORY } from 'src/helpers/urls'
 import { api } from 'src/helpers/api'
 import { useSelector } from 'react-redux'
+import { toast } from 'react-toastify'
 
 const required = (value) => (value ? undefined : 'Required')
 
@@ -25,11 +24,11 @@ const CircuitDirectoryCrud = () => {
   const [collapsed, setCollapsed] = useState(true)
   const [loading, setLoading] = useState(false)
   const [rows, setRows] = useState([])
-  const { addToast } = useToasts()
   const user = useSelector((state) => state.user)
 
   useEffect(() => {
     fetchTable()
+    // eslint-disable-next-line
   }, [])
 
   const metadata = [
@@ -106,13 +105,10 @@ const CircuitDirectoryCrud = () => {
       .delete(CIRCUIT_DIRECTORY, { data: { id: row.id } })
       .then(() => {
         fetchTable()
-        addToast('Circuit Directory Removed.', { appearance: 'success', autoDismiss: true })
+        toast.success('Circuit Directory Deleted.', { autoClose: 3000 })
       })
       .catch(() => {
-        addToast('Something went wrong removing Circuit Directory.', {
-          appearance: 'error',
-          autoDismiss: true,
-        })
+        toast.error('Error deleting Circuit Directory.', { autoClose: 3000 })
       })
   }
 
@@ -150,16 +146,10 @@ const CircuitDirectoryCrud = () => {
                       circuit_type_rc: e.type,
                       circuit_directory_details: e.circuitDirectoryDetails,
                     })
-                    addToast('Circuit Directory Updated.', {
-                      appearance: 'success',
-                      autoDismiss: true,
-                    })
+                    toast.success('Circuit Directory Updated.', { autoClose: 3000 })
                     fetchTable()
                   } catch (error) {
-                    addToast('Something went wrong Updating Circuit Directory. Try again.', {
-                      appearance: 'error',
-                      autoDismiss: true,
-                    })
+                    toast.error('Something went wrong Updating Circuit Directory. Try again.', { autoClose: 3000 })
                     throw Error(error)
                   }
                 }}
@@ -173,16 +163,10 @@ const CircuitDirectoryCrud = () => {
                       circuit_type_rc: e.type,
                       circuit_directory_details: e.circuitDirectoryDetails,
                     })
-                    addToast('Circuit Directory Created.', {
-                      appearance: 'success',
-                      autoDismiss: true,
-                    })
+                    toast.success('Circuit Directory Created.', { autoClose: 3000 })
                     fetchTable()
                   } catch (error) {
-                    addToast('Something went wrong Creating Circuit Directory. Try again.', {
-                      appearance: 'error',
-                      autoDismiss: true,
-                    })
+                    toast.error('Something went wrong Creating Circuit Directory. Try again.', { autoClose: 3000 })
                     throw Error(error)
                   }
                 }}

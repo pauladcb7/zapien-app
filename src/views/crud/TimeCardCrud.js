@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react'
 import { toast } from 'react-toastify'
 import {
@@ -28,7 +27,6 @@ import { useSelector } from 'react-redux'
 import CrudTable from 'src/components/CrudTable'
 import Select from 'react-select'
 import CreatableSelect from 'react-select/creatable'
-
 
 const required = (value) => (value ? undefined : 'Required')
 
@@ -134,13 +132,17 @@ function TimeCardCrud() {
   const [collapsed, setCollapsed] = useState(true)
   const [showElements, setShowElements] = useState(true)
   const isAdmin = useSelector((state) => state.user.role === 'admin')
-  
 
   useEffect(() => {
     // Example usage:
-    // toast.success('Loaded time cards!') // ADD THIS FOR SUCCESS
-    // toast.error('Something went wrong!') // ADD THIS FOR ERROR
+    // toast.success('Loaded time cards!')
+    // toast.error('Something went wrong!')
   }, [])
+
+  // Example: use toast in your handlers as needed
+  // function handleAddRow() {
+  //   toast.success('Row added!')
+  // }
 
   return (
     <CRow>
@@ -183,10 +185,10 @@ function TimeCardCrud() {
                   title="Time Card"
                   rows={[]}
                   onAddRow={() => {
-                    // toast.success('Row added!') // EXAMPLE USAGE
+                    // toast.success('Row added!')
                   }}
                   onRefreshTable={() => {
-                    // toast.info('Table refreshed!') // EXAMPLE USAGE
+                    // toast.info('Table refreshed!')
                   }}
                   metadata={[]}
                   loading={false}

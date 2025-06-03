@@ -23,7 +23,7 @@ import {
   CFormCheck,
 } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
-import { useToasts } from 'react-toast-notifications';
+import { toast } from 'react-toastify';
 import { api } from '../../helpers/api';
 import { SAVE_WORK_ORDER, WORK_TYPES } from '../../helpers/urls/index';
 import { useSelector } from 'react-redux';
@@ -37,63 +37,73 @@ const required = (value) => (value ? undefined : 'Required');
 const WorkOrder = () => {
   const [collapsed, setCollapsed] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [initialValues, setInitialValues] = useState({ date: moment().format('YYYY-MM-DD') });
+  const [initialValues] = useState({ date: moment().format('YYYY-MM-DD') });
   const [workTypes, setWorkTypes] = useState([]);
   const [signatureCustomer, setSignatureCustomer] = useState(null);
   const [signatureEmployee, setSignatureEmployee] = useState(null);
-  const { addToast } = useToasts();
   const user = useSelector((state) => state.user);
 
   useEffect(() => {
+    let isMounted = true;
     api
       .get(WORK_TYPES)
-      .then(setWorkTypes)
+      .then((data) => {
+        if (isMounted) setWorkTypes(Array.isArray(data) ? data : []);
+      })
       .catch(() => {
-        addToast('Error loading Job Locations. Refresh the page.', {
-          appearance: 'error',
-          autoDismiss: true,
+        toast.error('Error loading Job Locations. Refresh the page.', {
+          autoClose: 3000,
         });
+        if (isMounted) setWorkTypes([]);
       });
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const onSubmit = (e) => {
-    if (!signatureCustomer.isEmpty() && !signatureEmployee.isEmpty()) {
-      api
-        .post(SAVE_WORK_ORDER, {
-          data: {
-            work_order_id: '-1',
-            user_id: user.email,
-            entry_date: e.date,
-            work_type: e.workType === 'other' ? null : e.workType,
-            start_time: e.startTime,
-            end_time: e.endTime,
-            job_location: e.jobLocation,
-            job_details: e.jobDetails,
-            total_cost: e.totalCost,
-            other: e.otherWorkType || '',
-            employee_signature: signatureEmployee.toDataURL(),
-            customer_name: e.customerName,
-            customer_address: e.customerAddress,
-            customer_phone_number: e.customerPhone,
-            customer_email: e.customerEmail,
-            customer_signature: signatureCustomer.toDataURL(),
-          },
-        })
-        .then(() => {
-          workOrderPrint({
-            ...e,
-            customerSignature: signatureCustomer.toDataURL(),
-            employeeSignature: signatureEmployee.toDataURL(),
-          });
-          addToast('Work Order Submitted.', { appearance: 'success', autoDismiss: true });
-        })
-        .catch(() => {
-          addToast('Error creating Work Order. Try again.', {
-            appearance: 'error',
-            autoDismiss: true,
-          });
-        });
+    if (!signatureCustomer?.isEmpty?.() || !signatureEmployee?.isEmpty?.()) {
+      toast.error('Both signatures are required.', { autoClose: 3000 });
+      return;
     }
+    setShowModal(true);
+    api
+      .post(SAVE_WORK_ORDER, {
+        data: {
+          work_order_id: '-1',
+          user_id: user.email,
+          entry_date: e.date,
+          work_type: e.workType === 'other' ? null : e.workType,
+          start_time: e.startTime,
+          end_time: e.endTime,
+          job_location: e.jobLocation,
+          job_details: e.jobDetails,
+          total_cost: e.totalCost,
+          other: e.otherWorkType || '',
+          employee_signature: signatureEmployee.toDataURL(),
+          customer_name: e.customerName,
+          customer_address: e.customerAddress,
+          customer_phone_number: e.customerPhone,
+          customer_email: e.customerEmail,
+          customer_signature: signatureCustomer.toDataURL(),
+        },
+      })
+      .then(() => {
+        workOrderPrint({
+          ...e,
+          customerSignature: signatureCustomer.toDataURL(),
+          employeeSignature: signatureEmployee.toDataURL(),
+        });
+        toast.success('Work Order Submitted.', { autoClose: 3000 });
+      })
+      .catch(() => {
+        toast.error('Error creating Work Order. Try again.', {
+          autoClose: 3000,
+        });
+      })
+      .finally(() => {
+        setShowModal(false);
+      });
   };
 
   return (
@@ -104,7 +114,7 @@ const WorkOrder = () => {
             <CCardHeader>
               Work Order
               <div className="card-header-actions">
-                <CButton color="link" onClick={() => setCollapsed(!collapsed)}>
+                <CButton color="link" onClick={() => setCollapsed((prev) => !prev)}>
                   <CIcon icon={collapsed ? 'cil-arrow-top' : 'cil-arrow-bottom'} />
                 </CButton>
               </div>
@@ -137,7 +147,7 @@ const WorkOrder = () => {
 
                           <div className="mb-3">
                             <CFormLabel>Type of Work</CFormLabel>
-                            {workTypes.map((wt) => (
+                            {(Array.isArray(workTypes) ? workTypes : []).map((wt) => (
                               <Field name="workType" type="radio" value={String(wt.id)} key={wt.id}>
                                 {({ input }) => (
                                   <CFormCheck
@@ -328,16 +338,16 @@ const WorkOrder = () => {
                           </div>
                         </CCol>
                       </CRow>
+                      <CCardFooter>
+                        <CButton color="danger" size="lg" className="d-block w-100" type="submit">
+                          <CIcon icon="cil-save" /> Save
+                        </CButton>
+                      </CCardFooter>
                     </CForm>
                   )}
                 />
               </CCardBody>
             </CCollapse>
-            <CCardFooter>
-              <CButton color="danger" size="lg" block onClick={() => setShowModal(true)}>
-                <CIcon icon="cil-save" /> Save
-              </CButton>
-            </CCardFooter>
           </CCard>
         </CCol>
       </CRow>

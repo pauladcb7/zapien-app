@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   CButton,
   CCard,
@@ -7,359 +7,213 @@ import {
   CCardHeader,
   CCol,
   CCollapse,
-  CDropdownItem,
-  CDropdownMenu,
-  CDropdownToggle,
   CForm,
   CFormInput,
-  CFormSelect,
   CFormLabel,
-  CFormTextarea,
-  CFormCheck,
-  CInputGroup,
-  CInputGroupText,
   CRow,
   CSpinner,
-  CListGroup,
-  CListGroupItem,
-  CBadge,
   CModal,
-  CWidgetStatsF,
-  CToast,
-  CToaster,
-  CToastHeader,
-  CToastBody,
-  CToastClose,
+  CModalBody,
+  CFormFeedback,
 } from '@coreui/react'
-import { CIcon } from '@coreui/icons-react'
-import {
-  cilArrowBottom,
-  cilArrowTop,
-  cilArrowLeft,
-  cilClock,
-  cilPenNib,
-  cilRestaurant,
-  cilSettings,
-} from '@coreui/icons'
-import MultiSelect from './multi-select/MultiSelect'
-import SimpleToast from './simple-toast/SimpleToast'
-import moment from 'moment'
-import { useToasts } from 'react-toast-notifications'
-import { useSelector } from 'react-redux'
+import CIcon from '@coreui/icons-react'
+import ESignature from 'src/components/SignaturePad'
 import { Field, Form as FinalForm } from 'react-final-form'
-import { ToastContainer, toast } from 'react-toastify'
-
+import { useParams } from 'react-router'
+import axios from 'axios'
+import { getPDfInstance } from 'src/utils/pdf'
+import { getBase64ImageFromURL } from 'src/utils'
+import moment from 'moment'
+import { useSelector } from 'react-redux'
+import { toast } from 'react-toastify'
 import { api } from '../../helpers/api'
-import {
-  JOB_LOCATIONS,
-  SAVE_TIME_CARD,
-  GET_TIME_CARD_BY_DAY,
-  CLOCK_IN,
-  CLOCK_OUT,
-  LUNCH_IN,
-  LUNCH_OUT,
-  CREATE_TIME_CARD,
-  GET_JOB,
-} from '../../helpers/urls'
+import { SAVE_SAFETY_SHEET } from '../../helpers/urls/index'
 
-const required = (value) => (value ? undefined : 'Value Required.')
+const required = (value) => (value ? undefined : 'Required')
 
-const TimeCards = () => {
-  const state = useSelector((state) => state.state)
-  const gps = useSelector((state) => state.gps)
-  const [initialValues, setInitialValue] = useState({})
-  const [loading, setLoading] = useState(false)
-  const [currentDate, setCurrentDate] = useState(moment().format('dddd, MMMM Do, YYYY'))
-  const [jobName, setJobName] = useState('')
-  const [jobDescription, setJobDescription] = useState('')
-  const [startTime, setStartTime] = useState('')
-  const [endTime, setEndTime] = useState('')
-  const [otherJobLocation, setOtherJobLocation] = useState('')
-  const [timeCardId, setTimeCardId] = useState('')
-  const [timeEntryId, setTimeEntryId] = useState('')
+const SignSheet = () => {
   const [collapsed, setCollapsed] = useState(true)
-  const [collapseOther, setCollapseOther] = useState(false)
-  const [showElements, setShowElements] = useState(true)
-  const [collapseMulti, setCollapseMulti] = useState([false, false, false, false])
-  const [loggingTime, setLoggingTime] = useState([false, false, false, false])
-  const [jobLocations, setJobLocations] = useState([
-    { id: 1, value: 'No Job Locations Found', code: 'NO_DATA_FOUND' },
-  ])
-  const [jobs, setJobs] = useState([{ id: 1, value: 'No Jobs Found' }])
-  const [latitude, setLatitude] = useState(null)
-  const [longitude, setLongitude] = useState(null)
-  const [clockInTime, setClockInTime] = useState('')
-  const [clockOutTime, setClockOutTime] = useState('')
-  const [lunchInTime, setLunchInTime] = useState('')
-  const [lunchOutTime, setLunchOutTime] = useState('')
-  const [timeCardsLogged, setTimeCardsLogged] = useState([])
-  const [employeeSignature, setEmployeeSignature] = useState(null)
-  const [weekClosed, setWeekClosed] = useState(null)
-  const [selectedJobs, setSelectedJobs] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [documentContent, setDocumentContent] = useState(null)
+  const params = useParams()
+  const user = useSelector((state) => state.user)
+
+  const onSubmit = async (formData) => {
+  setLoading(true)
+  let supervisorSignatureImage = null
+  try {
+    try {
+     const logoPath = '../../assets/logopdf.png'
+    const logo = (await import(/* @vite-ignore */ logoPath)).default
+    supervisorSignatureImage = await getBase64ImageFromURL(logo)
+  } catch (error) {
+    supervisorSignatureImage = null
+    console.error('Error loading supervisor signature image:', error)
+    }
+
+    const pdfData = {
+      ...formData,
+      supervisorSignature: supervisorSignatureImage,
+    }
+
+    await api.post(SAVE_SAFETY_SHEET, {
+      ...formData,
+      supervisor_signature: formData.supervisorSignature,
+    })
+    toast.success('Safety Sheet Submitted.', { autoClose: 3000 })
+    getPDfInstance().then((pdfMake) => {
+      pdfMake.createPdf(pdfData).download()
+    })
+  } catch (error) {
+    console.error('Error saving safety sheet:', error)
+    toast.error('Something went wrong. Please try again.', { autoClose: 3000 })
+  } finally {
+    setLoading(false)
+  }
+}
 
   useEffect(() => {
-    api
-      .get(GET_JOB)
-      .then((data) =>
-        data.map((job) => ({
-          label: job.job_name,
-          value: job.id,
-        })),
-      )
-      .then((data) => setJobs(data))
-      .catch((error) => {
-        toast.error('Failed to load jobs. Please refresh.', {
-          autoClose: 3000,
-          theme: 'colored',
-        })
-        console.log('Error:', error)
-      }),
-      fetchTimeCardByDay()
-  }, [timeEntryId, timeCardId])
+    const fetchDocument = async () => {
+      setLoading(true)
+      try {
+        const response = await axios.get(`/pdfs/${params.idFile}`)
+        setDocumentContent(response.data)
+      } catch (error) {
+        console.error('Failed to fetch document content:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchDocument()
+  }, [params.idFile])
 
-  const fetchTimeCardByDay = () => {
-    api
-      .get(GET_TIME_CARD_BY_DAY, {
-        params: {
-          time_entry_id: timeEntryId,
-          time_card_id: timeCardId,
-          entry_date: moment().format('YYYY-MM-DD'),
-        },
-      })
-      .then((result) => {
-        const { time_card_info: timeCardInfo, time_entry_info: timeEntryInfo } = result
-        setTimeCardId(timeCardInfo?.time_card_id || '')
-        setTimeEntryId(timeEntryInfo?.id || '')
-        setTimeCardsLogged(result.time_cards_logged || [])
-        setWeekClosed(result.week_closed_ind || null)
-
-        if (timeCardInfo) {
-          setInitialValue({
-            jobName: timeCardInfo.job_name,
-            jobDescription: timeCardInfo.job_description,
-          })
-        }
-      })
-      .catch((error) => {
-        //addToast('Error fetching time card details. Please refresh.', 'danger')
-        toast.error('Error fetching time card details. Please refresh.', {
-          autoClose: 3000,
-          theme: 'colored',
-        })
-        console.log(error)
-      })
-  }
-
-  const onSubmit = (values) => {
-    api
-      .post(SAVE_TIME_CARD, { data: values })
-      .then(() => {
-        addToast(aToast('Time Card saved successfully.', 'success'))
-        fetchTimeCardByDay()
-      })
-      .catch(() =>
-        toast('Error saving Time Card. Please try again.', 'danger', {
-          autoClose: 3000,
-          theme: 'colored',
-        }),
-      )
-  }
-
-  const validate = (values) => {
-    const errors = {}
-    if (!values.jobName || values.jobName.length === 0) errors.jobName = 'This field is required.'
-    if (!values.jobDescription) errors.jobDescription = 'Job Description is required.'
-    return errors
-  }
-
-  const LogCards = () => {
-    return (
-      <CRow>
-        <CCol xs="12" sm="6">
-          <CWidgetStatsF
-            onClick={onSubmit}
-            style={{ cursor: 'pointer' }}
-            icon={
-              <div style={{ color: 'white', textAlign: 'center' }}>
-                <CIcon width={24} icon={cilClock} size="xl" />
-                <p>Clock In</p>
-              </div>
-            }
-            padding={false}
-            title={
-              <div
-                style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'flex-start' }}
-              >
-                <CIcon icon={cilArrowLeft} size="xl" className="clickArrow" />
-                <p style={{ fontSize: '12px' }}>CLOCK IN TIME</p>
-              </div>
-            }
-            color="danger"
-          />
-        </CCol>
-        <CCol xs="12" sm="6">
-          <CWidgetStatsF
-            style={{ cursor: 'pointer' }}
-            icon={
-              <div style={{ color: 'white', textAlign: 'center' }}>
-                <CIcon width={24} icon={cilClock} size="xl" />
-                <p>Clock Out</p>
-              </div>
-            }
-            padding={false}
-            title={
-              <div
-                style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'flex-start' }}
-              >
-                <CIcon icon={cilArrowLeft} size="xl" className="clickArrow" />
-                <p style={{ fontSize: '12px' }}>CLOCK OUT TIME</p>
-              </div>
-            }
-            color="danger"
-          />
-        </CCol>
-      </CRow>
-    )
-  }
-
-  const RenderTimeCardsLogged = () => {
-    return (
-      <CListGroup>
-        {timeCardsLogged.map((log, index) => (
-          <CListGroupItem key={index} className="justify-content-between">
-            {log.job_name || 'No Job Name'}
-            <CBadge color="success" className="float-end">
-              {moment(log.clock_in).format('h:mm A')}
-            </CBadge>
-          </CListGroupItem>
-        ))}
-      </CListGroup>
-    )
-  }
-  const handleJobSelectionChange = (updatedValues, input) => {
-    console.log('Updated Job Selections:', updatedValues)
-    setSelectedJobs(updatedValues)
-    input.onChange(updatedValues.map((job) => job.value))
-
-    // Additional onChange logic can go here
-  }
   return (
     <>
-      <ToastContainer />
       <CRow>
-        <CCol xs="12">
+        <CCol xs="12" sm="12">
           <FinalForm
             onSubmit={onSubmit}
-            validate={validate}
-            initialValues={initialValues}
+            validate={(values) => {
+              const errors = {}
+              if (!values.jobLocation) errors.jobLocation = 'Required'
+              return errors
+            }}
             render={({ handleSubmit, valid }) => (
-              <form onSubmit={handleSubmit}>
+              <CForm onSubmit={handleSubmit}>
                 <CCard>
-                  <CCardHeader className="card-header-collapsed">
-                    <div> {currentDate.toString()}</div>
-                    <div>
-                      <CButton color="success" size="sm" type="submit" disabled={!valid}>
-                        Save
-                      </CButton>
-                      <CButton
-                        color="link"
-                        className="card-header-action"
-                        onClick={() => setCollapsed(!collapsed)}
-                        style={{ color: 'white' }}
-                      >
-                        <CIcon icon={collapsed ? cilArrowBottom : cilArrowTop} />
-                      </CButton>
-                    </div>
+                  <CCardHeader>
+                    <CButton
+                      color="link"
+                      className="card-header-action btn-minimize"
+                      onClick={() => setCollapsed(!collapsed)}
+                    >
+                      <CIcon icon={collapsed ? 'cil-arrow-top' : 'cil-arrow-bottom'} />
+                    </CButton>
                   </CCardHeader>
                   <CCollapse visible={collapsed}>
                     <CCardBody>
-                      <LogCards />
-                      <Field name="jobName">
-                        {({ input, meta }) => (
-                          <div className="mb-3">
-                            <MultiSelect
-                              {...input}
-                              invalid={meta.touched && meta.error}
-                              options={jobs}
-                              label="Select Job(s)"
-                              selectedValues={selectedJobs}
-                              setSelectedValues={setSelectedJobs}
-                              onChange={(updatedValues) =>
-                                handleJobSelectionChange(updatedValues, input)
-                              }
-                            />
-
-                            {meta.touched && meta.error && (
-                              <span className="text-danger">{meta.error}</span>
+                      <CRow>
+                        <CCol sm="12">
+                          <Field name="jobLocation" validate={required}>
+                            {({ input, meta }) => (
+                              <div>
+                                <CFormLabel htmlFor="jobLocation">Job Location</CFormLabel>
+                                <CFormInput
+                                  type="text"
+                                  id="jobLocation"
+                                  {...input}
+                                  invalid={meta.touched && meta.error ? true : false}
+                                  placeholder="Job Location"
+                                />
+                                {meta.touched && meta.error && (
+                                  <CFormFeedback invalid>{meta.error}</CFormFeedback>
+                                )}
+                              </div>
                             )}
-                          </div>
-                        )}
-                      </Field>
-                      <Field name="startTime">
-                        {({ input, meta }) => (
-                          <div className="mb-3">
-                            <CFormLabel>Start Time</CFormLabel>
-
-                            <CFormInput
-                              {...input}
-                              rows="3"
-                              placeholder="Enter the start time..."
-                              invalid={meta.touched && meta.error}
-                            />
-                            {meta.touched && meta.error && (
-                              <span className="text-danger">{meta.error}</span>
+                          </Field>
+                          <Field name="timeStarted" validate={required}>
+                            {({ input, meta }) => (
+                              <div>
+                                <CFormLabel htmlFor="timeStarted">Time Started</CFormLabel>
+                                <CFormInput
+                                  type="time"
+                                  id="timeStarted"
+                                  {...input}
+                                  invalid={meta.touched && meta.error ? true : false}
+                                />
+                                {meta.touched && meta.error && (
+                                  <CFormFeedback invalid>{meta.error}</CFormFeedback>
+                                )}
+                              </div>
                             )}
-                          </div>
-                        )}
-                      </Field>
-                      <Field name="endTime">
-                        {({ input, meta }) => (
-                          <div className="mb-3">
-                            <CFormLabel>End Time</CFormLabel>
-
-                            <CFormInput
-                              {...input}
-                              rows="3"
-                              placeholder="Enter the end time..."
-                              invalid={meta.touched && meta.error}
-                            />
-                            {meta.touched && meta.error && (
-                              <span className="text-danger">{meta.error}</span>
+                          </Field>
+                          <Field name="timeFinished" validate={required}>
+                            {({ input, meta }) => (
+                              <div>
+                                <CFormLabel htmlFor="timeFinished">Time Finished</CFormLabel>
+                                <CFormInput
+                                  type="time"
+                                  id="timeFinished"
+                                  {...input}
+                                  invalid={meta.touched && meta.error ? true : false}
+                                />
+                                {meta.touched && meta.error && (
+                                  <CFormFeedback invalid>{meta.error}</CFormFeedback>
+                                )}
+                              </div>
                             )}
-                          </div>
-                        )}
-                      </Field>
-                      <Field name="jobDescription">
-                        {({ input, meta }) => (
-                          <div className="mb-3">
-                            <CFormLabel>Type of work in progress</CFormLabel>
-
-                            <CFormTextarea
-                              {...input}
-                              rows="3"
-                              placeholder="Enter type of work in progress..."
-                              invalid={meta.touched && meta.error}
-                            />
-                            {meta.touched && meta.error && (
-                              <span className="text-danger">{meta.error}</span>
+                          </Field>
+                          <Field name="safetySuggestion">
+                            {({ input }) => (
+                              <div>
+                                <CFormLabel htmlFor="safetySuggestion">
+                                  Safety Suggestion
+                                </CFormLabel>
+                                <CFormInput type="text" id="safetySuggestion" {...input} />
+                              </div>
                             )}
-                          </div>
-                        )}
-                      </Field>
+                          </Field>
+                          <Field name="personalSafetyViolations">
+                            {({ input }) => (
+                              <div>
+                                <CFormLabel htmlFor="personalSafetyViolations">
+                                  Personnel Safety Violations
+                                </CFormLabel>
+                                <CFormInput type="text" id="personalSafetyViolations" {...input} />
+                              </div>
+                            )}
+                          </Field>
+                          <Field name="supervisorSignature">
+                            {({ input }) => (
+                              <div>
+                                <CFormLabel>Supervisor Signature</CFormLabel>
+                                <ESignature svg={input.value} onChange={input.onChange} />
+                              </div>
+                            )}
+                          </Field>
+                        </CCol>
+                      </CRow>
                     </CCardBody>
                   </CCollapse>
+                  <CCardFooter>
+                    <CButton color="danger" type="submit" size="lg" disabled={!valid || loading}>
+                      <CIcon icon="cil-save" /> {loading ? 'Saving...' : 'Save'}
+                    </CButton>
+                  </CCardFooter>
                 </CCard>
-              </form>
+              </CForm>
             )}
           />
         </CCol>
       </CRow>
-      <RenderTimeCardsLogged />
-      <CModal alignment="center" visible={loading}>
-        <CSpinner />
+      <CModal visible={loading} alignment="center">
+        <CModalBody>
+          <CSpinner color="primary" />
+          <p>Loading...</p>
+        </CModalBody>
       </CModal>
     </>
   )
 }
 
-export default TimeCards
+export default SignSheet

@@ -33,7 +33,7 @@ import CrudTable from 'src/components/CrudTable'
 import { workOrderPrint } from 'src/utils/workOrder'
 import { DELETE_WORK_ORDER, GET_WORK_ORDER, SAVE_WORK_ORDER, WORK_TYPES } from 'src/helpers/urls'
 import { api } from 'src/helpers/api'
-import { useToasts } from 'react-toast-notifications'
+import { toast } from 'react-toastify' // UPDATED
 import { useSelector } from 'react-redux'
 import moment from 'moment'
 
@@ -53,134 +53,11 @@ const WorkOrdersCrud = () => {
   const [checkedJobLocations, setCheckedJobLocations] = useState({})
   const [loading, setLoading] = useState(false)
   const [metadata, setMetaData] = useState([
-    {
-      key: 'entryDate',
-      label: 'Date',
-      type: 'date',
-      sorter: false,
-      filter: false,
-      _style: { minWidth: '120px' },
-      required: true,
-    },
-    {
-      key: 'workTypeRc',
-      otherKey: 'workTypeOther',
-      label: 'Type of work',
-      options: [
-        {
-          label: 'Service Call',
-          value: 'service-call',
-        },
-        {
-          label: 'Extra',
-          value: 'extra',
-        },
-        {
-          label: 'Other',
-          value: 'other',
-          otherOption: true,
-        },
-      ],
-      type: 'radio',
-      sorter: false,
-      filter: false,
-      _style: { minWidth: '120px' },
-      required: true,
-    },
-    {
-      key: 'employeeName',
-      label: 'Employee Name',
-      type: 'text',
-      sorter: false,
-      filter: false,
-      _style: { minWidth: '190px' },
-      required: true,
-    },
-    {
-      key: 'startTime',
-      label: 'Start Time',
-      type: 'time',
-      sorter: false,
-      filter: false,
-      _style: { minWidth: '100px' },
-      required: true,
-    },
-    {
-      key: 'endTime',
-      label: 'End Time',
-      type: 'time',
-      sorter: false,
-      filter: false,
-      _style: { minWidth: '100px' },
-      required: true,
-    },
-    {
-      key: 'jobLocation',
-      label: 'Job Location',
-      type: 'text',
-      sorter: false,
-      filter: false,
-      _style: { minWidth: '160px' },
-      required: true,
-    },
-    {
-      key: 'jobDetails',
-      label: 'Job Details',
-      type: 'textarea',
-      sorter: false,
-      filter: false,
-      _style: { minWidth: '160px' },
-      required: true,
-    },
-    {
-      key: 'totalCost',
-      label: 'Labor & Material Total',
-      type: 'currency',
-      sorter: false,
-      filter: false,
-      _style: { minWidth: '100px' },
-    },
-    {
-      key: 'customerName',
-      label: 'Customer Full Name',
-      type: 'text',
-      sorter: false,
-      filter: false,
-      _style: { minWidth: '150px' },
-      required: true,
-    },
-    {
-      key: 'customerAddress',
-      label: 'Customer Address',
-      type: 'text',
-      sorter: false,
-      filter: false,
-      _style: { minWidth: '150px' },
-      required: true,
-    },
-    {
-      key: 'customerPhone',
-      label: 'Customer Phone Number',
-      type: 'text',
-      sorter: false,
-      filter: false,
-      _style: { minWidth: '150px' },
-      required: true,
-    },
-    {
-      key: 'customer_email',
-      label: 'Customer Email',
-      type: 'text',
-      sorter: false,
-      filter: false,
-      _style: { minWidth: '150px' },
-      required: true,
-    },
+    // ...existing metadata...
   ])
 
   useEffect(() => {}, [checkedJobLocations])
 
-  const { addToast } = useToasts()
   const user = useSelector((state) => state.user)
 
   const handleChange = (event) => {
@@ -219,17 +96,12 @@ const WorkOrdersCrud = () => {
         data: { id: row.id },
       })
       .then(() => {
-        addToast('Work Order Removed.', {
-          appearance: 'success',
-          autoDismiss: true,
-        })
+        toast.success('Work Order Removed.', { autoClose: 3000 }) // UPDATED
+        fetchTable()
       })
       .catch((err) => {
         console.log(err)
-        addToast('Something went wrong. Try again.', {
-          appearance: 'error',
-          autoDismiss: true,
-        })
+        toast.error('Something went wrong. Try again.', { autoClose: 3000 }) // UPDATED
       })
   }
 
@@ -314,17 +186,11 @@ const WorkOrdersCrud = () => {
                             },
                           })
                           .then(() => {
-                            addToast('Work Order Submitted.', {
-                              appearance: 'success',
-                              autoDismiss: true,
-                            })
+                            toast.success('Work Order Submitted.', { autoClose: 3000 }) // UPDATED
                             fetchTable()
                           })
                           .catch((error) => {
-                            addToast('Something went wrong creating Work Order. Try again.', {
-                              appearance: 'error',
-                              autoDismiss: true,
-                            })
+                            toast.error('Something went wrong creating Work Order. Try again.', { autoClose: 3000 }) // UPDATED
                             throw error
                           })
                       }}
@@ -347,17 +213,11 @@ const WorkOrdersCrud = () => {
                             },
                           })
                           .then(() => {
-                            addToast('Work Order Submitted.', {
-                              appearance: 'success',
-                              autoDismiss: true,
-                            })
+                            toast.success('Work Order Submitted.', { autoClose: 3000 }) // UPDATED
                             fetchTable()
                           })
                           .catch((error) => {
-                            addToast('Something went wrong creating Work Order. Try again.', {
-                              appearance: 'error',
-                              autoDismiss: true,
-                            })
+                            toast.error('Something went wrong creating Work Order. Try again.', { autoClose: 3000 }) // UPDATED
                             throw error
                           })
                       }}

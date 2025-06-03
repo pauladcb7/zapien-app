@@ -15,7 +15,7 @@ import {
   CTableDataCell,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { useToasts } from 'react-toast-notifications'
+import { toast } from 'react-toastify' // UPDATED
 import { MCS, GET_MCS, SAVE_MCS } from 'src/helpers/urls'
 import { api } from 'src/helpers/api'
 import { useSelector } from 'react-redux'
@@ -24,7 +24,6 @@ const MCSCrud = () => {
   const [collapsed, setCollapsed] = useState(true)
   const [loading, setLoading] = useState(false)
   const [rows, setRows] = useState([])
-  const { addToast } = useToasts()
   const user = useSelector((state) => state.user)
 
   const fields = [
@@ -59,10 +58,7 @@ const MCSCrud = () => {
         setLoading(false)
       })
       .catch(() => {
-        addToast('Something went wrong fetching MCS data', {
-          appearance: 'error',
-          autoDismiss: true,
-        })
+        toast.error('Something went wrong fetching MCS data', { autoClose: 3000 }) // UPDATED
       })
   }
 
@@ -74,27 +70,24 @@ const MCSCrud = () => {
     api
       .delete(MCS, { data: { id } })
       .then(() => {
-        addToast('MCS Removed.', { appearance: 'success', autoDismiss: true })
+        toast.success('MCS Removed.', { autoClose: 3000 }) // UPDATED
         fetchTable()
       })
       .catch(() => {
-        addToast('Something went wrong. Try again.', {
-          appearance: 'error',
-          autoDismiss: true,
-        })
+        toast.error('Something went wrong. Try again.', { autoClose: 3000 }) // UPDATED
       })
   }
 
   return (
-    <Row>
-      <Col xs="12" sm="12">
+    <CRow>
+      <CCol xs="12" sm="12">
         {collapsed && (
           <CCard>
             <CCardHeader>
               Motor Cheat Sheet 480V
               <div className="card-header-actions">
                 <CButton color="link" onClick={() => setCollapsed(!collapsed)}>
-                  <CIcon name={collapsed ? 'cil-arrow-top' : 'cil-arrow-bottom'} />
+                  <CIcon icon={collapsed ? 'cil-arrow-top' : 'cil-arrow-bottom'} />
                 </CButton>
               </div>
             </CCardHeader>
@@ -133,8 +126,8 @@ const MCSCrud = () => {
             </CCollapse>
           </CCard>
         )}
-      </Col>
-    </Row>
+      </CCol>
+    </CRow>
   )
 }
 

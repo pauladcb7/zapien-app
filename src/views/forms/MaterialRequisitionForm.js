@@ -20,7 +20,7 @@ import {
   CBadge,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { useToasts } from 'react-toast-notifications'
+import { toast } from 'react-toastify'
 import { api } from '../../helpers/api'
 import {
   SAVE_MATERIAL_REQUISITION,
@@ -39,7 +39,6 @@ const MaterialRequisitionForm = () => {
   const [details, setDetails] = useState([])
   const [rows, setRow] = useState([{}, {}, {}, {}])
   const [visible, setVisible] = useState(false)
-  const { addToast } = useToasts()
   const [initialValues, setInitialValue] = useState({})
   const [materialReqId, setMaterialReqId] = useState([])
   const user = useSelector((state) => state.user)
@@ -97,16 +96,14 @@ const MaterialRequisitionForm = () => {
           entryDate: moment().format('YYYY-MM-DD'),
         })
 
-        addToast('Material Requisition Submitted.', {
-          appearance: 'success',
-          autoDismiss: true,
+        toast.success('Material Requisition Submitted.', {
+          autoClose: 3000,
         })
       })
       .catch((error) => {
         console.error(error)
-        addToast('Something went wrong creating Material Requisition. Try again.', {
-          appearance: 'error',
-          autoDismiss: true,
+        toast.error('Something went wrong creating Material Requisition. Try again.', {
+          autoClose: 3000,
         })
       })
   }

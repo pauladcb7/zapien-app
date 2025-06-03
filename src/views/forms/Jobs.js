@@ -13,14 +13,13 @@ import {
   CTableHeaderCell,
   CTableRow,
 } from '@coreui/react' // Updated imports for CoreUI v5
-import { useToasts } from 'react-toast-notifications'
+import { toast } from 'react-toastify'
 import { api } from '../../helpers/api'
 import { GET_JOB } from '../../helpers/urls/index'
 import { useSelector } from 'react-redux'
 
 const Jobs = () => {
   const [jobs, setJobs] = useState([])
-  const { addToast } = useToasts()
   const user = useSelector((state) => state.user)
 
   useEffect(() => {
@@ -48,15 +47,14 @@ const Jobs = () => {
         })
         .catch((error) => {
           console.error('Error fetching jobs:', error)
-          addToast('Something went wrong getting Jobs', {
-            appearance: 'error',
-            autoDismiss: true,
+          toast.error('Something went wrong getting Jobs', {
+            autoClose: 3000,
           })
         })
     }
 
     fetchTable()
-  }, [addToast])
+  }, [])
 
   return (
     <CRow>

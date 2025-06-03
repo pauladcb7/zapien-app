@@ -68,6 +68,20 @@ const SheetCreate = () => {
                             </div>
                           )}
                         </Field>
+                        <Field name="voltage" validate={required}>
+                          {({ input, meta }) => (
+                            <div>
+                              <CFormLabel htmlFor="voltage">Voltage</CFormLabel>
+                              <input type="text" id="voltage" {...input} className="form-control" />
+                              {meta.touched && meta.error && (
+                                <CFormFeedback className="d-block">
+                                  Please provide a valid voltage
+                                </CFormFeedback>
+                              )}
+                            </div>
+                          )}
+                        </Field>
+                        {/* You can add more fields or an editable table for rows if needed */}
                       </CCol>
                     </CRow>
                   </CCardBody>

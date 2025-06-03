@@ -13,14 +13,13 @@ import {
   CTableBody,
   CTableDataCell,
 } from '@coreui/react'
-import { useToasts } from 'react-toast-notifications'
+import { toast } from 'react-toastify'
 import { api } from '../../helpers/api'
 import { GET_MCS } from '../../helpers/urls/index'
 import { useSelector } from 'react-redux'
 
 const MotorCheatSheet480 = () => {
   const [mcss, setMCSs] = useState([])
-  const { addToast } = useToasts()
 
   useEffect(() => {
     const fetchTable = async () => {
@@ -39,15 +38,14 @@ const MotorCheatSheet480 = () => {
         setMCSs(formattedData)
       } catch (error) {
         console.error('Error fetching MCS data:', error)
-        addToast('Something went wrong getting MCS data', {
-          appearance: 'error',
-          autoDismiss: true,
+        toast.error('Something went wrong getting MCS data', {
+          autoClose: 3000,
         })
       }
     }
 
     fetchTable()
-  }, [addToast])
+  }, [])
 
   const fields = [
     { key: 'motor_hp', label: 'Motor HP' },

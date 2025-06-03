@@ -21,7 +21,7 @@ import {
 } from '@coreui/react'
 import { cilArrowBottom, cilArrowTop, cilSave, cilPlus } from '@coreui/icons'
 import CIcon from '@coreui/icons-react'
-import { useToasts } from 'react-toast-notifications'
+import { toast } from 'react-toastify'
 import { Form, Field } from 'react-final-form'
 import arrayMutators from 'final-form-arrays'
 import { FieldArray } from 'react-final-form-arrays'
@@ -39,7 +39,6 @@ const initialArray = Array.from({ length: 20 }, (_, index) => ({
 const CircuitDirectoryHome = () => {
   const [collapsed, setCollapsed] = useState(true)
   const [showModal, setShowModal] = useState(false)
-  const { addToast } = useToasts()
 
   const onSubmit = async (values) => {
     try {
@@ -50,7 +49,7 @@ const CircuitDirectoryHome = () => {
         voltage: values.voltage,
         circuit_directory_details: values.circuitDirectoryDetails,
       })
-      addToast('Circuit Directory Submitted.', { appearance: 'success', autoDismiss: true })
+      toast.success('Circuit Directory Submitted.', { autoClose: 3000 })
       circuitHPrint({
         date: values.date,
         voltage: values.voltage,
@@ -58,9 +57,8 @@ const CircuitDirectoryHome = () => {
       })
     } catch (error) {
       console.error(error)
-      addToast('Error creating Circuit Directory. Try again.', {
-        appearance: 'error',
-        autoDismiss: true,
+      toast.error('Error creating Circuit Directory. Try again.', {
+        autoClose: 3000,
       })
     }
   }

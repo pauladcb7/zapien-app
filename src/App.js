@@ -5,6 +5,8 @@ import { LoginRoute } from './components/LoginRoute'
 import { PrivateRoute } from './components/PrivateRoute'
 import { CSpinner, useColorModes } from '@coreui/react'
 import './scss/style.scss'
+import { ToastContainer } from 'react-toastify' // ADD THIS
+import 'react-toastify/dist/ReactToastify.css' // ADD THIS
 
 // Containers
 const DefaultLayout = React.lazy(() => import('./layout/DefaultLayout'))
@@ -35,6 +37,7 @@ const App = () => {
 
   return (
     <HashRouter>
+      <ToastContainer /> {/* ADD THIS */}
       <Suspense
         fallback={
           <div className="pt-3 text-center">

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { CButton, CCard, CCardBody, CCardHeader, CCol, CCollapse, CRow } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
-import { useToasts } from 'react-toast-notifications'
+import { toast } from 'react-toastify' // UPDATED
 import { useSelector } from 'react-redux'
 import CrudTable from 'src/components/CrudTable'
 import { JOB, GET_JOB, SAVE_JOB } from 'src/helpers/urls'
@@ -11,8 +11,6 @@ const JobsCrud = () => {
   const [collapsed, setCollapsed] = useState(true)
   const [loading, setLoading] = useState(false)
   const [rows, setRows] = useState([])
-
-  const { addToast } = useToasts()
 
   const metadata = [
     { key: 'job_number', label: 'Job Number', type: 'text', required: true },
@@ -55,7 +53,7 @@ const JobsCrud = () => {
           })),
         ),
       )
-      .catch(() => addToast('Error fetching jobs', { appearance: 'error', autoDismiss: true }))
+      .catch(() => toast.error('Error fetching jobs', { autoClose: 3000 })) // UPDATED
       .finally(() => setLoading(false))
   }
 
@@ -87,39 +85,30 @@ const JobsCrud = () => {
                   api
                     .post(SAVE_JOB, { ...editedRow, job_id: editedRow.id })
                     .then(() =>
-                      addToast('Job updated successfully', {
-                        appearance: 'success',
-                        autoDismiss: true,
-                      }),
+                      toast.success('Job updated successfully', { autoClose: 3000 }), // UPDATED
                     )
                     .catch(() =>
-                      addToast('Error updating job', { appearance: 'error', autoDismiss: true }),
+                      toast.error('Error updating job', { autoClose: 3000 }), // UPDATED
                     )
                 }
                 onCreate={(row) =>
                   api
                     .post(SAVE_JOB, { ...row, job_id: '-1' })
                     .then(() =>
-                      addToast('Job created successfully', {
-                        appearance: 'success',
-                        autoDismiss: true,
-                      }),
+                      toast.success('Job created successfully', { autoClose: 3000 }), // UPDATED
                     )
                     .catch(() =>
-                      addToast('Error creating job', { appearance: 'error', autoDismiss: true }),
+                      toast.error('Error creating job', { autoClose: 3000 }), // UPDATED
                     )
                 }
                 onDelete={(row) =>
                   api
                     .delete(JOB, { data: { id: row.id } })
                     .then(() =>
-                      addToast('Job removed successfully', {
-                        appearance: 'success',
-                        autoDismiss: true,
-                      }),
+                      toast.success('Job removed successfully', { autoClose: 3000 }), // UPDATED
                     )
                     .catch(() =>
-                      addToast('Error removing job', { appearance: 'error', autoDismiss: true }),
+                      toast.error('Error removing job', { autoClose: 3000 }), // UPDATED
                     )
                 }
               />

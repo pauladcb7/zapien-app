@@ -21,7 +21,7 @@ import {
 import CIcon from '@coreui/icons-react'
 import { cilSave, cilArrowBottom, cilArrowTop } from '@coreui/icons'
 import { Form, Field } from 'react-final-form'
-import { useToasts } from 'react-toast-notifications'
+import { toast } from 'react-toastify'
 import { api } from '../../helpers/api'
 import { SAVE_CIRCUIT_DIRECTORY } from '../../helpers/urls/index'
 import { circuitPrint } from 'src/utils/circuitPrint'
@@ -42,7 +42,6 @@ const CircuitDirectoryBusiness480 = () => {
   const [rows, setRows] = useState(initialArray)
   const [circuitDirectoryId, setCircuitDirectoryId] = useState('-1')
   const circuitDirectoryType = 'BUSINESS_480V'
-  const { addToast } = useToasts()
 
   useEffect(() => {}, [])
 
@@ -71,10 +70,7 @@ const CircuitDirectoryBusiness480 = () => {
 
       setCircuitDirectoryId(circuitDirectoryID.id)
 
-      addToast('Circuit Directory Submitted.', {
-        appearance: 'success',
-        autoDismiss: true,
-      })
+      toast.success('Circuit Directory Submitted.', { autoClose: 3000 })
 
       circuitPrint({
         date: values.date,
@@ -83,10 +79,7 @@ const CircuitDirectoryBusiness480 = () => {
       })
     } catch (error) {
       console.error('Error creating Circuit Directory:', error)
-      addToast('Something went wrong creating Circuit Directory. Try again.', {
-        appearance: 'error',
-        autoDismiss: true,
-      })
+      toast.error('Something went wrong creating Circuit Directory. Try again.', { autoClose: 3000 })
     }
   }
 

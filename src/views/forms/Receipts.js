@@ -17,7 +17,7 @@ import {
 import CIcon from '@coreui/icons-react'
 import Select from 'react-select'
 import moment from 'moment'
-import { useToasts } from 'react-toast-notifications'
+import { toast } from 'react-toastify'
 import { api } from '../../helpers/api'
 import { SAVE_RECEIPT, GET_JOB, GET_WORK_ORDER } from '../../helpers/urls/index'
 import { useSelector } from 'react-redux'
@@ -30,8 +30,6 @@ const Receipt = () => {
   const [initialValues, setInitialValue] = useState({})
   const [jobs, setJobs] = useState([])
   const [workOrders, setWorkOrders] = useState([])
-
-  const { addToast } = useToasts()
   const user = useSelector((state) => state.user)
 
   useEffect(() => {
@@ -45,9 +43,8 @@ const Receipt = () => {
         setWorkOrders(formattedWorkOrders)
       })
       .catch(() => {
-        addToast('Error loading WorkOrders list. Refresh the page.', {
-          appearance: 'error',
-          autoDismiss: true,
+        toast.error('Error loading WorkOrders list. Refresh the page.', {
+          autoClose: 3000,
         })
       })
 
@@ -61,9 +58,8 @@ const Receipt = () => {
         setJobs(formattedJobs)
       })
       .catch(() => {
-        addToast('Error loading Jobs list. Refresh the page.', {
-          appearance: 'error',
-          autoDismiss: true,
+        toast.error('Error loading Jobs list. Refresh the page.', {
+          autoClose: 3000,
         })
       })
 
@@ -71,7 +67,7 @@ const Receipt = () => {
       date: moment().format('YYYY-MM-DD'),
       comments: '',
     })
-  }, [addToast])
+  }, [])
 
   const getBase64 = (file) => {
     return new Promise((resolve, reject) => {
@@ -98,15 +94,13 @@ const Receipt = () => {
         },
       })
       .then(() => {
-        addToast('Receipt Uploaded Successfully.', {
-          appearance: 'success',
-          autoDismiss: true,
+        toast.success('Receipt Uploaded Successfully.', {
+          autoClose: 3000,
         })
       })
       .catch(() => {
-        addToast('Error uploading Receipt. Try again.', {
-          appearance: 'error',
-          autoDismiss: true,
+        toast.error('Error uploading Receipt. Try again.', {
+          autoClose: 3000,
         })
       })
   }

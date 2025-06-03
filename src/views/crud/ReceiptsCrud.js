@@ -13,14 +13,13 @@ import CIcon from '@coreui/icons-react'
 import CrudTable from 'src/components/CrudTable'
 import { SAVE_RECEIPT, DELETE_RECEIPT, GET_RECEIPTS } from 'src/helpers/urls'
 import { api } from 'src/helpers/api'
-import { useToasts } from 'react-toast-notifications'
+import { toast } from 'react-toastify' // UPDATED
 import moment from 'moment'
 
 const ReceiptsCrud = () => {
   const [collapsed, setCollapsed] = useState(true)
   const [loading, setLoading] = useState(false)
   const [rows, setRows] = useState([])
-  const { addToast } = useToasts()
 
   const metadata = [
     {
@@ -102,11 +101,11 @@ const ReceiptsCrud = () => {
         data: { receipt_id: row.receipt_id },
       })
       .then(() => {
-        addToast('Receipt Removed.', { appearance: 'success', autoDismiss: true })
+        toast.success('Receipt Removed.', { autoClose: true }) // UPDATED
         fetchTable()
       })
       .catch(() => {
-        addToast('Something went wrong. Try again.', { appearance: 'error', autoDismiss: true })
+        toast.error('Something went wrong. Try again.', { autoClose: true }) // UPDATED
       })
   }
 
@@ -153,14 +152,11 @@ const ReceiptsCrud = () => {
                       },
                     })
                     .then(() => {
-                      addToast('Receipt Submitted.', { appearance: 'success', autoDismiss: true })
+                      toast.success('Receipt Submitted.', { autoClose: true }) // UPDATED
                       fetchTable()
                     })
                     .catch(() => {
-                      addToast('Something went wrong. Try again.', {
-                        appearance: 'error',
-                        autoDismiss: true,
-                      })
+                      toast.error('Something went wrong. Try again.', { autoClose: true }) // UPDATED
                     })
                 }}
                 onCreate={(row) => {
@@ -178,14 +174,11 @@ const ReceiptsCrud = () => {
                       },
                     })
                     .then(() => {
-                      addToast('Receipt Submitted.', { appearance: 'success', autoDismiss: true })
+                      toast.success('Receipt Submitted.', { autoClose: true }) // UPDATED
                       fetchTable()
                     })
                     .catch(() => {
-                      addToast('Something went wrong. Try again.', {
-                        appearance: 'error',
-                        autoDismiss: true,
-                      })
+                      toast.error('Something went wrong. Try again.', { autoClose: true }) // UPDATED
                     })
                 }}
                 onDelete={onDelete}
