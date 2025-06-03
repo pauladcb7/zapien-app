@@ -12,11 +12,6 @@ import {
   CFormCheck,
   CRow,
   CCol,
-  CModal,
-  CModalHeader,
-  CModalTitle,
-  CModalBody,
-  CModalFooter,
   CBadge,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
@@ -25,52 +20,27 @@ import { FieldArray } from 'react-final-form-arrays'
 import arrayMutators from 'final-form-arrays'
 import { useSelector } from 'react-redux'
 import CrudTable from 'src/components/CrudTable'
-import Select from 'react-select'
-import CreatableSelect from 'react-select/creatable'
+
+// Modular field components
+import JobLocationField from 'src/components/timecard/JobLocationField'
+import TimeFields from 'src/components/timecard/TimeFields'
+import SafteyFields from 'src/components/timecard/SafteyFields'
+import SupervisorSignatureField from 'src/components/timecard/SupervisorSignatureField'
 
 const required = (value) => (value ? undefined : 'Required')
 
-const initialArray = []
-for (let index = 1; index < 43; index++) {
-  const element = { ckt: index, load: '', ckt1: index + 1, load1: '' }
-  initialArray.push(element)
-  index++
-}
-
-function TimeEntry({ push, locations }) {
+function TimeEntry({ locations }) {
   return (
     <div>
-      <Field name="lunch_in">
-        {({ input, meta }) => (
-          <CForm className="mb-3">
-            <CFormLabel>Lunch In</CFormLabel>
-            <CFormInput {...input} type="time" invalid={meta.invalid && meta.touched} />
-            {meta.touched && meta.error && (
-              <CBadge color="danger" className="text-danger">
-                Please provide valid information
-              </CBadge>
-            )}
-          </CForm>
-        )}
-      </Field>
-      <Field name="lunch_out">
-        {({ input, meta }) => (
-          <CForm className="mb-3">
-            <CFormLabel>Lunch Out</CFormLabel>
-            <CFormInput {...input} type="time" invalid={meta.invalid && meta.touched} />
-            {meta.touched && meta.error && (
-              <CBadge color="danger" className="text-danger">
-                Please provide valid information
-              </CBadge>
-            )}
-          </CForm>
-        )}
-      </Field>
+      <JobLocationField />
+      <TimeFields />
+      <SafteyFields />
+      <SupervisorSignatureField />
       <FieldArray name="timecards">
-        {({ fields: items }) => (
+        {({ fields }) => (
           <div>
             <CrudTable
-              items={items.value}
+              items={fields.value}
               columns={[
                 { key: 'jobName', label: 'Job Name', minWidth: 150 },
                 { key: 'jobDescription', label: 'Job Description', minWidth: 150 },
@@ -104,21 +74,14 @@ function TimeEntry({ push, locations }) {
                   <td>
                     <Field name={`timecards.${index}.jobLocations`} validate={required}>
                       {({ input }) => (
-                        <CreatableSelect
-                          isMulti
-                          menuPortalTarget={document.body}
-                          onChange={input.onChange}
-                          value={input.value}
-                          styles={{ menuPortal: (base) => ({ ...base, zIndex: 9999 }) }}
-                          options={locations}
-                        />
+                        <JobLocationField input={input} />
                       )}
                     </Field>
                   </td>
                 </tr>
               )}
             />
-            <CButton block color="dark" type="button" onClick={() => push('timecards', {})}>
+            <CButton block color="dark" type="button" onClick={() => fields.push({})}>
               <CIcon icon="cil-plus" /> Add Timecard
             </CButton>
           </div>
@@ -139,11 +102,6 @@ function TimeCardCrud() {
     // toast.error('Something went wrong!')
   }, [])
 
-  // Example: use toast in your handlers as needed
-  // function handleAddRow() {
-  //   toast.success('Row added!')
-  // }
-
   return (
     <CRow>
       <CCol xs="12" sm="12">
@@ -163,7 +121,23 @@ function TimeCardCrud() {
             </CCardHeader>
             <CCollapse visible={collapsed}>
               <CCardBody>
-                <CRow>
+                <FinalForm
+                  onSubmit={(values) => {
+                    toast.success('Time card submitted!')
+                    // You can send values to your API here
+                  }}
+                  mutators={{ ...arrayMutators }}
+                  initialValues={{ timecards: [{}] }}
+                  render={({ handleSubmit }) => (
+                    <CForm onSubmit={handleSubmit}>
+                      <TimeEntry locations={[]} />
+                      <CButton color="primary" type="submit" className="mt-3">
+                        Submit Time Card
+                      </CButton>
+                    </CForm>
+                  )}
+                />
+                <CRow className="mt-4">
                   <CCol md={5}>
                     <CForm className="mb-3">
                       <CFormLabel>Start Date</CFormLabel>
