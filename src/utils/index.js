@@ -1,28 +1,19 @@
-export const isLogged = function () {
-  return false
-}
+export const isLogged = () => false
+
 export function getBase64ImageFromURL(url) {
   return new Promise((resolve, reject) => {
-    var img = new Image();
-    img.setAttribute("crossOrigin", "anonymous");
-  
+    const img = new window.Image();
+    img.setAttribute('crossOrigin', 'anonymous');
     img.onload = () => {
-      var canvas = document.createElement("canvas");
+      const canvas = document.createElement('canvas');
       canvas.width = img.width;
       canvas.height = img.height;
-  
-      var ctx = canvas.getContext("2d");
+      const ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0);
-  
-      var dataURL = canvas.toDataURL("image/png");
-  
+      const dataURL = canvas.toDataURL('image/png');
       resolve(dataURL);
     };
-  
-    img.onerror = error => {
-      reject(error);
-    };
-  
+    img.onerror = (error) => reject(error);
     img.src = url;
   });
 }

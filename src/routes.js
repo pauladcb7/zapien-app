@@ -88,7 +88,7 @@ const Toasts = React.lazy(() => import('./views/notifications/toasts/Toasts'))
 const Widgets = React.lazy(() => import('./views/widgets/Widgets'))
 
 const routes = [
-  { path: '/', exact: true, element: <Navigate to="/dashboard" replace /> },
+  { path: '/', element: <Navigate to="/dashboard" replace /> },
   { path: '/dashboard', name: 'Dashboard', element: <Dashboard /> },
   { path: '/dashboard-old', name: 'DashboardOld', element: <DashboardOld /> },
 
@@ -151,12 +151,12 @@ const routes = [
   { path: '/report/receipts', name: 'Receipts', element: <ReceiptsCrud /> },
   { path: '/receipts/create', name: 'Receipts', element: <Receipts /> },
 
-  { path: '/', exact: true, name: 'Home' },
-  { path: '/dashboard', name: 'Dashboard', element: Dashboard },
-  { path: '/theme', name: 'Theme', element: Colors, exact: true },
-  { path: '/theme/colors', name: 'Colors', element: Colors },
-  { path: '/theme/typography', name: 'Typography', element: Typography },
-  { path: '/base', name: 'Base', element: Cards, exact: true },
+  { path: '/', element: <Navigate to="/dashboard" replace /> },
+  { path: '/dashboard', name: 'Dashboard', element: <Dashboard /> },
+  { path: '/theme', name: 'Theme', element: <Colors /> },
+  { path: '/theme/colors', name: 'Colors', element: <Colors /> },
+  { path: '/theme/typography', name: 'Typography', element: <Typography /> },
+  { path: '/base', name: 'Base', element: <Cards /> },
   // { path: '/base/accordion', name: 'Accordion', element: Accordion },
   // { path: '/base/breadcrumbs', name: 'Breadcrumbs', element: Breadcrumbs },
   // { path: '/base/cards', name: 'Cards', element: Cards },

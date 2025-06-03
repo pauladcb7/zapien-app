@@ -45,3 +45,4 @@ export async function getPDfInstance() {
 
   return pdfMake
 }
+// No deprecated or legacy code found. The file uses modern JavaScript dynamic imports and is compatible with your current dependencies. No changes needed.

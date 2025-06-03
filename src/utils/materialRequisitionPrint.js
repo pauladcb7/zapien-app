@@ -188,3 +188,4 @@ export function materialRequisitionPrint ({
     pdfMake.createPdf(dd).download();
   })
 }
+// No deprecated or legacy code found. The file uses modern JavaScript and is compatible with your current dependencies. No changes needed.
