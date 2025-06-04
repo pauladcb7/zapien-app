@@ -39,30 +39,39 @@ const SignSheet = () => {
   const user = useSelector((state) => state.user)
 
   const onSubmit = async (formData) => {
-    setLoading(true)
+  setLoading(true)
+  try {
+    let logo = null
     try {
-      const logo = (await import('../../assets/logopdf.png')).default
-      const supervisorSignatureImage = await getBase64ImageFromURL(logo)
-      const pdfData = {
-        ...formData,
-        supervisorSignature: supervisorSignatureImage,
-      }
-
-      await api.post(SAVE_SAFETY_SHEET, {
-        ...formData,
-        supervisor_signature: formData.supervisorSignature,
-      })
-      toast.success('Safety Sheet Submitted.', { autoClose: 3000 })
-      getPDfInstance().then((pdfMake) => {
-        pdfMake.createPdf(pdfData).download()
-      })
-    } catch (error) {
-      console.error('Error saving safety sheet:', error)
-      toast.error('Something went wrong. Please try again.', { autoClose: 3000 })
-    } finally {
-      setLoading(false)
+      // Dynamically search for the logo in the assets folder using Vite's import.meta.glob
+      const images = import.meta.glob('/src/assets/logopdf.png', { eager: true })
+      logo = images['/src/assets/logopdf.png']?.default || null
+    } catch (e) {
+      logo = null // If logo is missing, just use null
     }
+    const supervisorSignatureImage = logo
+      ? await getBase64ImageFromURL(logo)
+      : null
+    const pdfData = {
+      ...formData,
+      supervisorSignature: supervisorSignatureImage,
+    }
+
+    await api.post(SAVE_SAFETY_SHEET, {
+      ...formData,
+      supervisor_signature: formData.supervisorSignature,
+    })
+    toast.success('Safety Sheet Submitted.', { autoClose: 3000 })
+    getPDfInstance().then((pdfMake) => {
+      pdfMake.createPdf(pdfData).download()
+    })
+  } catch (error) {
+    console.error('Error saving safety sheet:', error)
+    toast.error('Something went wrong. Please try again.', { autoClose: 3000 })
+  } finally {
+    setLoading(false)
   }
+}
 
   useEffect(() => {
     const fetchDocument = async () => {
@@ -179,7 +188,7 @@ const SignSheet = () => {
                             {({ input }) => (
                               <div>
                                 <CFormLabel>Supervisor Signature</CFormLabel>
-                                <ESignature svg={input.value} onChange={input.onChange} />
+                                <ESignature value={input.value} onChange={input.onChange} />
                               </div>
                             )}
                           </Field>

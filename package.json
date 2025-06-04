@@ -38,6 +38,7 @@
     "final-form-arrays": "latest",
     "html-to-pdfmake": "2.5.26",
     "husky": "9.1.7",
+    "jspdf": "^3.0.1",
     "moment": "latest",
     "moment-timezone": "0.6.0",
     "pdfmake": "0.2.20",

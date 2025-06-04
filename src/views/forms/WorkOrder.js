@@ -21,6 +21,7 @@ import {
   CInputGroupText,
   CBadge,
   CFormCheck,
+  CFormFeedback,
 } from '@coreui/react';
 import CIcon from '@coreui/icons-react';
 import { toast } from 'react-toastify';
@@ -32,15 +33,18 @@ import ESignature from 'src/components/SignaturePad';
 import { workOrderPrint } from 'src/utils/workOrder';
 import moment from 'moment';
 
-const required = (value) => (value ? undefined : 'Required');
+// Updated validator with logging and robust check
+const required = (value) => {
+  console.log('Signature value:', value);
+  if (typeof value === 'string' && value.trim().length > 0) return undefined;
+  return 'Required';
+};
 
 const WorkOrder = () => {
   const [collapsed, setCollapsed] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [initialValues] = useState({ date: moment().format('YYYY-MM-DD') });
   const [workTypes, setWorkTypes] = useState([]);
-  const [signatureCustomer, setSignatureCustomer] = useState(null);
-  const [signatureEmployee, setSignatureEmployee] = useState(null);
   const user = useSelector((state) => state.user);
 
   useEffect(() => {
@@ -62,7 +66,7 @@ const WorkOrder = () => {
   }, []);
 
   const onSubmit = (e) => {
-    if (!signatureCustomer?.isEmpty?.() || !signatureEmployee?.isEmpty?.()) {
+    if (!e.signatureCustomer || !e.signatureEmployee) {
       toast.error('Both signatures are required.', { autoClose: 3000 });
       return;
     }
@@ -80,19 +84,19 @@ const WorkOrder = () => {
           job_details: e.jobDetails,
           total_cost: e.totalCost,
           other: e.otherWorkType || '',
-          employee_signature: signatureEmployee.toDataURL(),
+          employee_signature: e.signatureEmployee,
           customer_name: e.customerName,
           customer_address: e.customerAddress,
           customer_phone_number: e.customerPhone,
           customer_email: e.customerEmail,
-          customer_signature: signatureCustomer.toDataURL(),
+          customer_signature: e.signatureCustomer,
         },
       })
       .then(() => {
         workOrderPrint({
           ...e,
-          customerSignature: signatureCustomer.toDataURL(),
-          employeeSignature: signatureEmployee.toDataURL(),
+          customerSignature: e.signatureCustomer,
+          employeeSignature: e.signatureEmployee,
         });
         toast.success('Work Order Submitted.', { autoClose: 3000 });
       })
@@ -327,15 +331,35 @@ const WorkOrder = () => {
                             )}
                           </Field>
 
-                          <div className="mb-3">
-                            <CFormLabel>Customer Signature</CFormLabel>
-                            <ESignature onReady={setSignatureCustomer} />
-                          </div>
+                          {/* Customer Signature */}
+                          <Field name="signatureCustomer" validate={required}>
+                            {({ input, meta }) => (
+                              <div className="mb-3">
+                                <CFormLabel>Customer Signature</CFormLabel>
+                                <ESignature value={input.value} onChange={input.onChange} />
+                                {meta.touched && meta.error && (
+                                  <CFormFeedback invalid style={{ display: 'block' }}>
+                                    {meta.error}
+                                  </CFormFeedback>
+                                )}
+                              </div>
+                            )}
+                          </Field>
 
-                          <div className="mb-3">
-                            <CFormLabel>Employee Signature</CFormLabel>
-                            <ESignature onReady={setSignatureEmployee} />
-                          </div>
+                          {/* Employee Signature */}
+                          <Field name="signatureEmployee" validate={required}>
+                            {({ input, meta }) => (
+                              <div className="mb-3">
+                                <CFormLabel>Employee Signature</CFormLabel>
+                                <ESignature value={input.value} onChange={input.onChange} />
+                                {meta.touched && meta.error && (
+                                  <CFormFeedback invalid style={{ display: 'block' }}>
+                                    {meta.error}
+                                  </CFormFeedback>
+                                )}
+                              </div>
+                            )}
+                          </Field>
                         </CCol>
                       </CRow>
                       <CCardFooter>

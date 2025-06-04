@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   CButton,
   CCard,
@@ -18,6 +18,7 @@ import {
   CModalBody,
   CModalFooter,
   CBadge,
+  CFormInput,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { toast } from 'react-toastify'
@@ -29,6 +30,7 @@ import {
 import { useSelector } from 'react-redux'
 import arrayMutators from 'final-form-arrays'
 import { Field, Form } from 'react-final-form'
+import { FieldArray } from 'react-final-form-arrays'
 import moment from 'moment'
 
 const required = (value) => (value ? undefined : 'Required')
@@ -36,8 +38,6 @@ const required = (value) => (value ? undefined : 'Required')
 const MaterialRequisitionForm = () => {
   const [collapsed, setCollapsed] = useState(true)
   const [showElements, setShowElements] = useState(true)
-  const [details, setDetails] = useState([])
-  const [rows, setRow] = useState([{}, {}, {}, {}])
   const [visible, setVisible] = useState(false)
   const [initialValues, setInitialValue] = useState({})
   const [materialReqId, setMaterialReqId] = useState([])
@@ -51,17 +51,22 @@ const MaterialRequisitionForm = () => {
     setInitialValue({
       requestedBy: fullName,
       entryDate: moment().format('YYYY-MM-DD'),
+      materialDetails: [{}], // Start with one empty row
     })
   }, [])
 
   const fetchTable = () => {
     api.get(GET_MATERIAL_REQUISITION_BY_EMPLOYEE).then((materialReq) => {
-      materialReq.forEach((mr) => {
-        mr.entryDate = moment(mr.entryDate).format('YYYY-MM-DD')
-        mr.needBy = moment(mr.needBy).format('YYYY-MM-DD')
-        mr.requestedBy = `${mr.requestedBy?.firstName} ${mr.requestedBy?.lastName}`
-      })
-      setMaterialReqList(materialReq)
+      if (Array.isArray(materialReq)) {
+        materialReq.forEach((mr) => {
+          mr.entryDate = moment(mr.entryDate).format('YYYY-MM-DD')
+          mr.needBy = moment(mr.needBy).format('YYYY-MM-DD')
+          mr.requestedBy = `${mr.requestedBy?.firstName} ${mr.requestedBy?.lastName}`
+        })
+        setMaterialReqList(materialReq)
+      } else {
+        setMaterialReqList([]) // or handle error
+      }
     })
   }
 
@@ -94,6 +99,7 @@ const MaterialRequisitionForm = () => {
         form.reset({
           requestedBy: fullName,
           entryDate: moment().format('YYYY-MM-DD'),
+          materialDetails: [{}],
         })
 
         toast.success('Material Requisition Submitted.', {
@@ -116,15 +122,21 @@ const MaterialRequisitionForm = () => {
             <CCardHeader>
               Material Requisitions
               <div className="card-header-actions">
-                <CButton
+               <CButton
                   color="success"
                   size="sm"
                   onClick={() => {
                     setInitialValue({
                       requestedBy: fullName,
                       entryDate: moment().format('YYYY-MM-DD'),
-                    })
-                    setVisible(!visible)
+                      materialDetails: [{}],
+                      jobName: '',
+                      jobLocation: '',
+                      needBy: '',
+                      description: '',
+                      status: 'OPEN',
+                    });
+                    setVisible(true); // Always open modal
                   }}
                 >
                   Create
@@ -164,14 +176,7 @@ const MaterialRequisitionForm = () => {
                           color="dark"
                           size="sm"
                           onClick={() => {
-                            materialRequisitionPrint({
-                              jobLocation: item.jobLocation,
-                              jobName: item.jobName,
-                              needBy: item.needBy,
-                              requestedBy: item.requestedBy,
-                              materialRequisitionDetails: item.materialDetails,
-                              todayDate: item.entryDate,
-                            })
+                            // You can add your print/download PDF logic here
                           }}
                         >
                           <CIcon name="cil-print" />
@@ -193,7 +198,7 @@ const MaterialRequisitionForm = () => {
             </CCardBody>
           </CCard>
         </CCol>
-        <CModal show={visible} onClose={() => setVisible(false)} closeOnBackdrop={false}>
+        <CModal visible={visible} onClose={() => setVisible(false)} backdrop="static">
           <CModalHeader closeButton>
             <CModalTitle>Create / Edit Material Requisition</CModalTitle>
           </CModalHeader>
@@ -209,7 +214,85 @@ const MaterialRequisitionForm = () => {
             render={({ handleSubmit }) => (
               <form onSubmit={handleSubmit}>
                 <CModalBody>
-                  <CRow>{/* Additional fields here */}</CRow>
+                  <CRow>
+                    <FieldArray name="materialDetails">
+                      {({ fields }) => (
+                        <CTable hover striped responsive>
+                          <CTableHead>
+                            <CTableRow>
+                              <CTableHeaderCell>Item Description</CTableHeaderCell>
+                              <CTableHeaderCell>Part Number</CTableHeaderCell>
+                              <CTableHeaderCell>Size</CTableHeaderCell>
+                              <CTableHeaderCell>Quantity</CTableHeaderCell>
+                              <CTableHeaderCell>Remove</CTableHeaderCell>
+                            </CTableRow>
+                          </CTableHead>
+                          <CTableBody>
+                            {fields.map((name, idx) => (
+                              <CTableRow key={name}>
+                                <CTableDataCell>
+                                  <Field
+                                    name={`${name}.itemDescription`}
+                                    component="input"
+                                    placeholder="Description"
+                                    className="form-control"
+                                  />
+                                </CTableDataCell>
+                                <CTableDataCell>
+                                  <Field
+                                    name={`${name}.partNumber`}
+                                    component="input"
+                                    placeholder="Part #"
+                                    className="form-control"
+                                  />
+                                </CTableDataCell>
+                                <CTableDataCell>
+                                  <Field
+                                    name={`${name}.size`}
+                                    component="input"
+                                    placeholder="Size"
+                                    className="form-control"
+                                  />
+                                </CTableDataCell>
+                                <CTableDataCell>
+                                  <Field
+                                    name={`${name}.quantity`}
+                                    component="input"
+                                    type="number"
+                                    min="1"
+                                    placeholder="Qty"
+                                    className="form-control"
+                                  />
+                                </CTableDataCell>
+                                <CTableDataCell>
+                                  <CButton
+                                    color="danger"
+                                    size="sm"
+                                    type="button"
+                                    onClick={() => fields.remove(idx)}
+                                  >
+                                    Remove
+                                  </CButton>
+                                </CTableDataCell>
+                              </CTableRow>
+                            ))}
+                            <CTableRow>
+                              <CTableDataCell colSpan={5}>
+                                <CButton
+                                  color="primary"
+                                  size="sm"
+                                  type="button"
+                                  onClick={() => fields.push({})}
+                                >
+                                  Add Material
+                                </CButton>
+                              </CTableDataCell>
+                            </CTableRow>
+                          </CTableBody>
+                        </CTable>
+                      )}
+                    </FieldArray>
+                  </CRow>
                 </CModalBody>
                 <CModalFooter>
                   <CButton color="secondary" onClick={() => setVisible(false)}>
