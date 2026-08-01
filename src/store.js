@@ -3,7 +3,15 @@ import { configureStore } from '@reduxjs/toolkit'
 const initialState = {
   sidebarShow: true,
   theme: 'light',
-  user: JSON.parse(localStorage.getItem('user')) || null,
+  // Default to demo account if none in localStorage
+  user: JSON.parse(localStorage.getItem('user')) || {
+    id: 1,
+    user_id: 1,
+    first_name: 'demo',
+    last_name: 'demo',
+    email: 'demo@demo.com',
+    token: 'test'
+  },
 }
 
 const changeState = (state = initialState, { type, ...rest }) => {

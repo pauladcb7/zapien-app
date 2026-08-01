@@ -41,24 +41,23 @@ const Login = () => {
         user_email: e.username.toLowerCase(),
         user_passwd: e.password,
       })
-      .then((token) => {
-        api.get(TEST, { headers: { 'x-access-token': token.token } }).then((data) => {
-          if (data) {
-            console.log('Logged In!!')
-            dispatch({
-              type: 'SET_USER',
-              user: {
-                first_name: data.first_name,
-                last_name: data.last_name,
-                email: data.email,
-                phone_number: data.phone_number,
-                address: data.address,
-                role: data.role || 'employee',
-                profile_img: data.profile_img,
-                token: token.token,
-              },
-            })
-          }
+      .then(({ user: userData, token }) => {
+        // Login successful, save user (including id) and token to store
+        console.log('Logged in user:', userData)
+        dispatch({
+          type: 'SET_USER',
+          user: {
+            id: userData.id || userData.user_id,
+            user_id: userData.user_id || userData.id,
+            first_name: userData.first_name,
+            last_name: userData.last_name,
+            email: userData.email,
+            phone_number: userData.phone_number,
+            address: userData.address,
+            role: userData.role || 'employee',
+            profile_img: userData.profile_img,
+            token: token,
+          },
         })
       })
       .catch((err) => {

@@ -45,6 +45,9 @@ const TimeCards = () => {
   const [clockedIn, setClockedIn] = useState(false)
   const [clockedOut, setClockedOut] = useState(false)
   const user = useSelector((state) => state.user)
+  console.log('TimeCards component: user from useSelector:', JSON.stringify(user)); // ADDED LOG
+  const userId = user?.id || user?.user_id // This component-scoped userId is a snapshot.
+  console.log('TimeCards component: derived component-scoped userId:', userId); // ADDED LOG
 
   // Fetch job locations, job names, and today's time_entry
   useEffect(() => {
@@ -56,43 +59,68 @@ const TimeCards = () => {
       .then((jobs) => setJobNames(Array.isArray(jobs) ? jobs : []))
       .catch((error) => console.error('Error loading Job Names:', error))
 
-    if (user && user.id) {
-      fetchOrCreateTimeEntry()
+    const effectUserId = user?.id || user?.user_id; // Derive from user in effect closure
+    console.log('TimeCards useEffect: user object from closure:', JSON.stringify(user)); // ADDED LOG
+    console.log('TimeCards useEffect: derived effectUserId:', effectUserId); // ADDED LOG
+
+    if (effectUserId) {
+      console.log('TimeCards useEffect: effectUserId is defined, calling fetchOrCreateTimeEntry with:', effectUserId); // ADDED LOG
+      fetchOrCreateTimeEntry(effectUserId); // Pass effectUserId
+    } else {
+      console.log('TimeCards useEffect: effectUserId is undefined, NOT calling fetchOrCreateTimeEntry.'); // ADDED LOG
+      // Alert if user object seems loaded but lacks an ID.
+      if (user && Object.keys(user).length > 0 && !effectUserId) {
+        console.error('TimeCards useEffect: User object is present but user ID is missing.', JSON.stringify(user)); // ADDED LOG
+        alert('User data is incomplete (missing ID). Please try logging out and back in.'); // ADDED ALERT
+      }
     }
-    // eslint-disable-next-line
-  }, [user && user.id])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]); // CHANGED DEPENDENCY to [user]
 
   // Fetch or create today's time_entry for the user
-  const fetchOrCreateTimeEntry = async () => {
+  const fetchOrCreateTimeEntry = async (currentUserIdParam) => { // CHANGED SIGNATURE to accept userId
     setLoading(true)
+    console.log('fetchOrCreateTimeEntry: received currentUserIdParam:', userId); // UPDATED LOG with new param name
+
+    if (!userId) { // Use parameter for guard clause
+      alert('User ID is missing. Cannot create time entry.')
+      console.error('fetchOrCreateTimeEntry: userId is missing.'); // UPDATED LOG
+      setLoading(false)
+      return null
+    }
+
     try {
+      console.log('fetchOrCreateTimeEntry internal userId check (using param):', userId) // Log the param being used
       const res = await api.get(GET_TIME_ENTRY_BY_DAY, {
         params: {
-          user_id: user?.id,
+          user_id: userId, // Use passed parameter
           entry_date: moment().format('YYYY-MM-DD'),
         },
       })
-      if (res && res.time_entry) {
-        setTimeEntryId(res.time_entry.id)
+      console.log('GET_TIME_ENTRY_BY_DAY response:', res)
+      if (res && res.time_entry_info) {
+        console.log('Time Entry found for today:', res.time_entry_info);
+        getTimeEntryId(res.time_entry_info.id)
         setInitialValues({
-          ...res.time_entry,
-          timeStarted: res.time_entry.timeStarted || '',
-          timeFinished: res.time_entry.timeFinished || '',
+          ...res.time_entry_info,
+          timeStarted: res.time_entry_info.timeStarted || '',
+          timeFinished: res.time_entry_info.timeFinished || '',
         })
-        setTimeCardId(res.time_entry.time_card_id || null)
-        setClockedIn(!!res.time_entry.timeStarted)
-        setClockedOut(!!res.time_entry.timeFinished)
+        setTimeCardId(res.time_entry_info.time_card_id || null)
+        setClockedIn(!!res.time_entry_info.timeStarted)
+        setClockedOut(!!res.time_entry_info.timeFinished)
+        return res.time_entry_info.id
       } else {
-        // Guard: do not create if user.id is missing
-        if (!user || !user.id) {
-          alert('User ID is missing. Cannot create time entry.')
+        // Guard: do not create if userId is missing (already checked, but good for clarity)
+        if (!userId) {
+          alert('User ID is missing. Cannot create time entry.') // Should have been caught earlier
           setLoading(false)
-          return
+          return null
         }
         // Create new time_entry for today with all required fields
         const payload = {
           timeEntry: {
-            user_id: user.id, // Always send a valid user_id
+            user_id: userId, // Use passed parameter
             entry_date: moment().format('YYYY-MM-DD'),
             lunch_in: null,
             lunch_out: null,
@@ -114,6 +142,7 @@ const TimeCards = () => {
         setTimeCardId(null)
         setClockedIn(false)
         setClockedOut(false)
+        return createRes.id
       }
     } catch (error) {
       setInitialValues({})
@@ -121,6 +150,8 @@ const TimeCards = () => {
       setTimeCardId(null)
       setClockedIn(false)
       setClockedOut(false)
+      console.error('Error in fetchOrCreateTimeEntry:', error)
+      return null
     } finally {
       setLoading(false)
     }
@@ -142,18 +173,52 @@ const TimeCards = () => {
   // Save time_card (detail) for clock in/out
   const saveTimeCard = async (fields) => {
     setLoading(true)
+    console.log('saveTimeCard user object:', JSON.stringify(user)) // Log user object
+    const currentSaveUserId = user?.id || user?.user_id; // Derive userId for this operation
+    console.log('saveTimeCard computed currentSaveUserId:', currentSaveUserId) // Log derived userId
+
+    // Ensure user and timeEntryId are set before saving
+    if (!currentSaveUserId) {
+      console.error('Error saving time card: missing user ID')
+      setLoading(false)
+      alert('User ID is missing. Please log in again.')
+      return
+    }
+
+    let currentEntryIdToUse = timeEntryId;
+    if (!currentEntryIdToUse) {
+      console.warn('Time entry ID missing in saveTimeCard, fetching or creating time entry')
+      // Ensure currentSaveUserId is valid before calling fetchOrCreateTimeEntry
+      if (!currentSaveUserId) {
+          alert('User ID is missing. Cannot fetch/create time entry for saving time card.');
+          console.error('saveTimeCard: currentSaveUserId is missing before calling fetchOrCreateTimeEntry.');
+          setLoading(false);
+          return;
+      }
+      currentEntryIdToUse = await fetchOrCreateTimeEntry(currentSaveUserId); // Pass currentSaveUserId
+      if (currentEntryIdToUse) {
+          setTimeEntryId(currentEntryIdToUse); // Update state if new entry was created/fetched
+      } else {
+        console.error('Failed to get timeEntryId before saving time card')
+        setLoading(false)
+        // Alert might have been shown by fetchOrCreateTimeEntry if currentSaveUserId was the issue
+        alert('Unable to save time card: could not obtain time entry.')
+        return
+      }
+    }
+
     try {
-      // Always use the latest form values, fallback only if truly missing
       let jobLocationsValue = fields.jobLocation;
       if (typeof jobLocationsValue === 'string') {
         jobLocationsValue = jobLocationsValue.split(',').map(s => s.trim()).filter(Boolean);
       } else if (!Array.isArray(jobLocationsValue)) {
-        jobLocationsValue = [String(jobLocationsValue)]
+        jobLocationsValue = [String(jobLocationsValue)];
       }
+
       const payload = {
         entry_date: moment().format('YYYY-MM-DD'),
-        user_id: user?.id,
-        time_entry_id: timeEntryId,
+        user_id: currentSaveUserId, // Use derived userId for this operation
+        time_entry_id: currentEntryIdToUse, // Use the potentially updated entry ID
         id: timeCardId,
         job_name: fields.jobName,
         job_locations: jobLocationsValue,
@@ -166,27 +231,38 @@ const TimeCards = () => {
         clock_out_time: fields.timeFinished || '',
         clock_out_lat: fields.clockOutLat || '',
         clock_out_lng: fields.clockOutLng || '',
-        // Add any other required fields here
-      }
-      const res = await api.post(SAVE_TIME_CARD, payload)
-      setTimeCardId(res.id || timeCardId)
-      setClockedIn(!!payload.clock_in_time)
-      setClockedOut(!!payload.clock_out_time)
+      };
+
+      console.log('SAVE_TIME_CARD payload:', payload);
+      const res = await api.post(SAVE_TIME_CARD, payload);
+      setTimeCardId(res.id || timeCardId);
+      setClockedIn(!!payload.clock_in_time);
+      setClockedOut(!!payload.clock_out_time);
     } catch (error) {
-      console.error('Error saving time card:', error)
+      console.error('Error saving time card:', error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   // Save time_entry (master) for managers
   const saveTimeEntry = async (fields) => {
     setLoading(true)
+    const currentManagerSaveUserId = user?.id || user?.user_id; // Derive ID for this operation
+    console.log('saveTimeEntry: user object:', JSON.stringify(user));
+    console.log('saveTimeEntry: derived currentManagerSaveUserId:', currentManagerSaveUserId);
+
+    if (!currentManagerSaveUserId) {
+        console.error('Error saving time entry: missing user ID');
+        setLoading(false);
+        alert('User ID is missing for saving time entry. Please log in again.');
+        return;
+    }
     try {
       const payload = {
         ...fields,
         id: timeEntryId,
-        user_id: user?.id,
+        user_id: currentManagerSaveUserId, // Use derived ID
         entry_date: moment().format('YYYY-MM-DD'),
       }
       await api.post(SAVE_TIME_ENTRY, payload)
@@ -199,7 +275,33 @@ const TimeCards = () => {
 
   // Clock In/Out handlers
   const handleClock = async (form, type) => {
+    setLoading(true)
     try {
+      let entryIdToUse = timeEntryId; // Local var for entryId for this operation
+
+      if (!entryIdToUse) {
+        const clockActionUserId = user?.id || user?.user_id; // Get current userId for this action
+        console.log('handleClock: timeEntryId missing, attempting to fetch/create with userId:', clockActionUserId); // Log
+
+        if (!clockActionUserId) { // Guard if userId is still not available
+          alert('User ID is missing. Cannot perform clock action.');
+          console.error('handleClock: clockActionUserId is missing.');
+          setLoading(false);
+          return;
+        }
+
+        entryIdToUse = await fetchOrCreateTimeEntry(clockActionUserId); // Pass userId
+        if (!entryIdToUse) {
+          // Alert might have been shown by fetchOrCreateTimeEntry if clockActionUserId was the issue,
+          // or other error occurred during fetch/create.
+          console.error('handleClock: Failed to fetch or create time entry.');
+          // Avoid throwing error if alert already handled it, just stop processing.
+          setLoading(false);
+          return;
+        }
+        setTimeEntryId(entryIdToUse); // Update state if a new entryId was obtained
+      }
+
       const gps = await getGPS()
       const now = moment().format('HH:mm')
       const values = form.getState().values
@@ -229,9 +331,13 @@ const TimeCards = () => {
           clockOutLng: gps.lng,
         })
       }
-      fetchOrCreateTimeEntry()
+      // Refresh the entry after saving
+      await fetchOrCreateTimeEntry()
     } catch (e) {
-      alert('Unable to get GPS location.')
+      console.error('Error in handleClock:', e)
+      alert(e.message || 'Clock action failed')
+    } finally {
+      setLoading(false)
     }
   }
 

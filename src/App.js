@@ -46,22 +46,22 @@ const App = () => {
         }
       >
         <Routes>
-          {/* <Route
+          <Route
             path="/login"
             element={
               <LoginRoute>
                 <Login />
               </LoginRoute>
             }
-          /> */}
+          />
           <Route path="/404" element={<Page404 />} />
           <Route path="/500" element={<Page500 />} />
           <Route
             path="*"
             element={
-              // <PrivateRoute>
+              <PrivateRoute>
                 <DefaultLayout />
-              // </PrivateRoute>
+              </PrivateRoute>
             }
           />
         </Routes>
